@@ -19,7 +19,6 @@ class AutoEncoder(nn.Module):
             A custom AutoEncoder could be trained and used with the same interface.
             Yet, this model works quite well for many tasks out of the box!
         """
-
         super().__init__()
         self.model = AutoencoderKL.from_pretrained(model_type)
 

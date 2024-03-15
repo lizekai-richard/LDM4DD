@@ -1,7 +1,7 @@
 import torch.nn.functional as F
 from tqdm.auto import tqdm
 from diffusion.utils.forward import *
-from samplers.DDPM import DDPM_Sampler
+from samplers.DDPM import DDPMSampler
 from backbones.unet import *
 
 
@@ -31,7 +31,7 @@ class DenoisingDiffusionProcess(nn.Module):
                                        with_time_emb=True)
 
         # defaults to a DDPM sampler if None is provided
-        self.sampler = DDPM_Sampler(num_timesteps=self.num_timesteps) if sampler is None else sampler
+        self.sampler = DDPMSampler(num_timesteps=self.num_timesteps) if sampler is None else sampler
 
     @torch.no_grad()
     def forward(self,
@@ -120,7 +120,7 @@ class DenoisingDiffusionConditionalProcess(nn.Module):
                                        with_time_emb=True)
 
         # defaults to a DDPM sampler if None is provided
-        self.sampler = DDPM_Sampler(num_timesteps=self.num_timesteps) if sampler is None else sampler
+        self.sampler = DDPMSampler(num_timesteps=self.num_timesteps) if sampler is None else sampler
 
     @torch.no_grad()
     def forward(self,
