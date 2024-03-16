@@ -42,7 +42,7 @@ def train(args):
                 every_n_epochs=args.save_freq,
                 save_top_k=args.top_k
             )],
-        gpus=[device for device in args.devices.split(",")],
+        devices=args.devices,
         logger=wandb_logger,
         log_every_n_steps=args.log_steps
     )
@@ -67,4 +67,5 @@ if __name__ == '__main__':
     parser.add_argument("--log_steps", type=int, default=100)
     parser.add_argument("--num_timesteps", type=int, default=1000)
     parser.add_argument("--warmup_steps", type=int, default=100)
-    parser.add_argument("--devices", type=str, default="0,1")
+    parser.add_argument("--accelerator", type=str, default="gpu")
+    parser.add_argument("--devices", type=str, default=1)
