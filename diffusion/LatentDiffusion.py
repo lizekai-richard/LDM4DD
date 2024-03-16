@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from diffusers.models import AutoencoderKL
 from diffusers.optimization import get_cosine_schedule_with_warmup
-from DenoisingDiffusion import DenoisingDiffusionProcess, DenoisingDiffusionConditionalProcess
+from .DenoisingDiffusion import DenoisingDiffusionProcess, DenoisingDiffusionConditionalProcess
 
 
 class AutoEncoder(nn.Module):
@@ -116,7 +116,7 @@ class LatentDiffusion(pl.LightningModule):
         optimizer = torch.optim.AdamW(list(filter(lambda p: p.requires_grad, self.model.parameters())), lr=self.lr)
         scheduler = get_cosine_schedule_with_warmup(optimizer,
                                                     num_warmup_steps=self.num_warmup_steps,
-                                                    num_training_steps=len(self.train_dataloader()) * self.num_epcohs)
+                                                    num_training_steps=len(self.train_dataloader()) * self.num_epochs)
         return [optimizer], [scheduler]
 
 

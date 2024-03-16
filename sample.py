@@ -10,7 +10,6 @@ from diffusion.samplers.DDPM import DDPMSampler
 
 
 def conditional_sample(args):
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     num_classes = args.num_classes

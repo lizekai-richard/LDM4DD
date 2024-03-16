@@ -1,8 +1,8 @@
 import argparse
 import pytorch_lightning as pl
 import kornia.augmentation as KA
-from lightning.pytorch.loggers import WandbLogger
-from lightning.pytorch.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 from diffusion.LatentDiffusion import LatentDiffusionConditional
 from datasets.example_dataset import ExampleImageDataset
 from utils.EMA import EMA
@@ -54,16 +54,17 @@ def train(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_data_path", type=str, default="/path/to/train/data")
-    parser.add_argument("--val_data_path", type=str, default="/path/to/validation/data")
-    parser.add_argument("--save_path", type=str, default="/path/to/save/model")
+    parser.add_argument("--crop_size", type=int, default=16)
+    parser.add_argument("--train_data_path", type=str, default="temp/train/data/0")
+    parser.add_argument("--val_data_path", type=str, default="temp/validation/data/0")
+    parser.add_argument("--save_path", type=str, default="temp/save/model")
     parser.add_argument("--save_freq", type=int, default=200)
-    parser.add_argument("--top_k", type=int, default=3)
+    parser.add_argument("--top_k", type=int, default=1)
     parser.add_argument("--lr", type=float, default=0.01)
-    parser.add_argument("--batch_size", type=int, default=64)
-    parser.add_argument("--num_epochs", type=int, default=1000)
+    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--num_epochs", type=int, default=10)
     parser.add_argument("--max_steps", type=int, default=100000)
     parser.add_argument("--log_steps", type=int, default=100)
     parser.add_argument("--num_timesteps", type=int, default=1000)
-    parser.add_argument("--num_warmup_steps", type=int, default=100)
-    parser.add_argument("--devices", type=str, default="0,1,2,3")
+    parser.add_argument("--warmup_steps", type=int, default=100)
+    parser.add_argument("--devices", type=str, default="0,1")

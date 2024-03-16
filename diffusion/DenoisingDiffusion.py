@@ -1,8 +1,8 @@
 import torch.nn.functional as F
 from tqdm.auto import tqdm
 from diffusion.utils.forward import *
-from samplers.DDPM import DDPMSampler
-from backbones.unet import *
+from .samplers.DDPM import DDPMSampler
+from .backbones.unet import *
 
 
 class DenoisingDiffusionProcess(nn.Module):

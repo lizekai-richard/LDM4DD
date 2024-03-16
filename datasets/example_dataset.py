@@ -31,7 +31,7 @@ class ExampleImageDataset(Dataset):
             )
 
             # check files
-        supported_formats = ['webp', 'jpg']
+        supported_formats = ['webp', 'jpg', 'png']
         self.files = [el for el in os.listdir(self.root_dir) if el.split('.')[-1] in supported_formats]
 
     def __len__(self):
