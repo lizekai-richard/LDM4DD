@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from diffusers.models import AutoencoderKL
+from diffusers.optimization import get_cosine_schedule_with_warmup
 from DenoisingDiffusion import DenoisingDiffusionProcess, DenoisingDiffusionConditionalProcess
 
 
@@ -43,7 +44,9 @@ class LatentDiffusion(pl.LightningModule):
                  num_timesteps=1000,
                  latent_scale_factor=0.1,
                  batch_size=1,
-                 lr=1e-4):
+                 lr=1e-4,
+                 num_epochs=100,
+                 num_warmup_steps=100):
         """
             This is a simplified version of Latent Diffusion
         """
@@ -54,6 +57,8 @@ class LatentDiffusion(pl.LightningModule):
         self.lr = lr
         self.register_buffer('latent_scale_factor', torch.tensor(latent_scale_factor))
         self.batch_size = batch_size
+        self.num_epochs = num_epochs
+        self.num_warmup_steps = num_warmup_steps
 
         self.ae = AutoEncoder()
         with torch.no_grad():
@@ -108,7 +113,11 @@ class LatentDiffusion(pl.LightningModule):
             return None
 
     def configure_optimizers(self):
-        return torch.optim.AdamW(list(filter(lambda p: p.requires_grad, self.model.parameters())), lr=self.lr)
+        optimizer = torch.optim.AdamW(list(filter(lambda p: p.requires_grad, self.model.parameters())), lr=self.lr)
+        scheduler = get_cosine_schedule_with_warmup(optimizer,
+                                                    num_warmup_steps=self.num_warmup_steps,
+                                                    num_training_steps=len(self.train_dataloader()) * self.num_epcohs)
+        return [optimizer], [scheduler]
 
 
 class LatentDiffusionConditional(LatentDiffusion):
@@ -118,13 +127,17 @@ class LatentDiffusionConditional(LatentDiffusion):
                  num_timesteps=1000,
                  latent_scale_factor=0.1,
                  batch_size=1,
-                 lr=1e-4):
+                 lr=1e-4,
+                 num_epochs=100,
+                 num_warmup_steps=100):
         pl.LightningModule.__init__(self)
         self.train_dataset = train_dataset
         self.valid_dataset = valid_dataset
         self.lr = lr
         self.register_buffer('latent_scale_factor', torch.tensor(latent_scale_factor))
         self.batch_size = batch_size
+        self.num_epochs = num_epochs
+        self.num_warmup_steps = num_warmup_steps
 
         self.ae = AutoEncoder()
         with torch.no_grad():
