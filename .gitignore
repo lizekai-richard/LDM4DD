@@ -1,0 +1,5 @@
+__pycache__
+ILSVRC2012_img_val/*
+label_cleaning/*
+cifar100/*
+cifar10/*
