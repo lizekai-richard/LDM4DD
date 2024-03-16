@@ -7,7 +7,7 @@ from torchvision.transforms.functional import pil_to_tensor
 
 class __CIFAR_Customized(Dataset):
     '''
-        Wrapping torchvision's cifar100 dataset so that it has the same API as example dataset
+        Wrapping torchvision's cifar100 dataset so that it has the same format as example dataset.
     '''
     def __init__(self, root_dir, cifar_class=None, transforms=None, conditional=False, download=True):
         if cifar_class is None:
@@ -99,3 +99,4 @@ class CIFAR10_Customized(__CIFAR_Customized):
 class CIFAR100_Customized(__CIFAR_Customized):
     def __init__(self, root_dir, transforms=None, conditional=False, download=True):
         super().__init__(root_dir, cifar_class=CIFAR100, transforms=transforms, conditional=conditional, download=download)
+        
