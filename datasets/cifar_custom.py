@@ -3,18 +3,25 @@ import kornia.augmentation as KA
 from torch.utils.data import Dataset
 from torchvision.datasets import CIFAR10, CIFAR100
 from torchvision.transforms.functional import pil_to_tensor
+from torchvision import transforms
 
 
 class __CIFAR_Customized(Dataset):
     '''
-        Wrapping torchvision's cifar100 dataset so that it has the same format as example dataset.
+        Wrapping torchvision's cifar dataset so that it has the same format as example dataset.
     '''
-    def __init__(self, root_dir, cifar_class=None, transforms=None, conditional=False, download=True):
+    def __init__(self, root_dir, 
+                 cifar_class=None, 
+                 target_size=None,
+                 transforms=None, 
+                 conditional=False, 
+                 download=True):
         if cifar_class is None:
             raise NotImplementedError("Please call the subclass or specify cifar_class manually")
         self.cifar = cifar_class(root_dir, download=download)
         self.transforms = transforms
         self.conditional = conditional
+        self.target_size = target_size
 
         # set up transforms
         if self.transforms is not None:
@@ -35,63 +42,33 @@ class __CIFAR_Customized(Dataset):
     def __getitem__(self, idx):
         # Single indexing or slicing (range of indices)
         if torch.is_tensor(idx):
-            if idx.dim() == 0:
-                idx = [idx.item()]
-            else:
-                idx = idx.tolist()
-        
-        if isinstance(idx, int):
-            idx  = [idx]
+            idx = idx.tolist()
 
-        image = torch.cat([pil_to_tensor(self.cifar[i][0]).unsqueeze(0) for i in idx], dim=0)
+        image, label = self.cifar[idx]
+        image = pil_to_tensor(image)  / 255
+
+        # Standardize resolution to target size
+        if self.target_size:
+            resize_transform = transforms.Resize((self.target_size, self.target_size))
+            image = resize_transform(image)
 
         if self.conditional:
-            c, h, w = image.shape
-            slice = int(w / 2)
-            condition = image[:, :, slice:]
-            image = image[:, :, :slice]
+            # Not sure how to use labels as condition - specified by input_T?
+            condition = label
             if self.transforms is not None:
+                # TODO: Check how condition works
                 out = self.input_T(image, condition)
                 image = out[0][0]
                 condition = out[1][0]
-            
-            if image.shape[0] == 1:
-                # Single image
-                return image.squeeze(0), condition # image shape: (Channel, Height, Width)
-            else:
-                # Batch image
                 return image, condition # image shape: (Batch, Channel, Height, Width)
         
         elif self.transforms is not None:
             image = self.input_T(image)[0]
-            if image.shape[0] == 1:
-                # Single image
-                return image.squeeze(0)
-            else:
-                # Batch image
-                return image
+            return image
         
         else:
-            if image.shape[0] == 1:
-                # Single image
-                return image.squeeze(0)
-            else:
-                # Batch image
-                return image
+            return image
     
-    def get_label(self, idx):
-        # Single indexing or slicing (range of indices)
-        if torch.is_tensor(idx):
-            if idx.dim() == 0:
-                idx = idx.item()
-            else:
-                idx = idx.tolist()
-
-        if isinstance(idx, int):
-            return torch.tensor(self.cifar[idx][1]) # dim = 0
-        else:
-            return torch.tensor([self.cifar[i][1] for i in idx]) # dim = 1
-
 class CIFAR10_Customized(__CIFAR_Customized):
     def __init__(self, root_dir, transforms=None, conditional=False, download=True):
         super().__init__(root_dir, cifar_class=CIFAR10, transforms=transforms, conditional=conditional, download=download)
@@ -99,4 +76,3 @@ class CIFAR10_Customized(__CIFAR_Customized):
 class CIFAR100_Customized(__CIFAR_Customized):
     def __init__(self, root_dir, transforms=None, conditional=False, download=True):
         super().__init__(root_dir, cifar_class=CIFAR100, transforms=transforms, conditional=conditional, download=download)
-        

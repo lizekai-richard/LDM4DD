@@ -4,8 +4,6 @@ import torch
 from kornia.utils import image_to_tensor
 import kornia.augmentation as KA
 from torch.utils.data import Dataset
-from torchvision.datasets import CIFAR100
-from torchvision.transforms.functional import pil_to_tensor
 
 class ExampleImageDataset(Dataset):
     """Dataset returning images in a folder."""
