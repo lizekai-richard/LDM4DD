@@ -1,0 +1,4 @@
+__pycache__
+label_cleaning/*
+cifar100/*
+cifar10/*
