@@ -1,10 +1,10 @@
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from diffusers.models import AutoencoderKL
 from diffusers.optimization import get_cosine_schedule_with_warmup
-from DenoisingDiffusion import DenoisingDiffusionProcess, DenoisingDiffusionConditionalProcess
+from .DenoisingDiffusion import DenoisingDiffusionProcess, DenoisingDiffusionConditionalProcess
 
 
 class AutoEncoder(nn.Module):
