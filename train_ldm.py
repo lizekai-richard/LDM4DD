@@ -1,12 +1,11 @@
 import argparse
 import lightning.pytorch as pl
 import kornia.augmentation as KA
-from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.loggers import TensorBoardLogger, WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
 from diffusion.LatentDiffusion import LatentDiffusionConditional
 from datasets.cifar_custom import CIFAR10_Customized
 from utils.EMA import EMA
-
 
 def train(args):
     print("Building the datasets...")
@@ -27,8 +26,8 @@ def train(args):
                                        num_epochs=args.num_epochs,
                                        batch_size=args.batch_size)
     print("Done!")
-    # logger = WandbLogger(project="CS5340")
-    logger = TensorBoardLogger(save_dir="tensorboard_logs/")
+    logger = WandbLogger(project="CS5340")
+    # logger = TensorBoardLogger(save_dir="tensorboard_logs/")
 
     trainer = pl.Trainer(
         max_steps=args.max_steps,
