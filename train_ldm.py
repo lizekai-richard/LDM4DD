@@ -7,6 +7,7 @@ from diffusion.LatentDiffusion import LatentDiffusionConditional
 from datasets.cifar_custom import CIFAR10_Customized
 from utils.EMA import EMA
 
+
 def train(args):
     print("Building the datasets...")
     train_ds = CIFAR10_Customized(args.train_data_path,
