@@ -68,7 +68,7 @@ class FIDEvaluation:
             )
             for _ in tqdm(range(num_batches)):
                 try:
-                    real_samples = next(self.dl)
+                    real_samples, _ = next(self.dl)
                 except StopIteration:
                     break
                 real_samples = real_samples.to(self.device)
@@ -283,10 +283,12 @@ class Trainer(object):
                 total_loss = 0.
 
                 for _ in range(self.gradient_accumulate_every):
-                    data = next(self.dl).to(device)
+                    images, conditions = next(self.dl)
+                    images = images.to(device)
+                    conditions = conditions.to(device)
 
                     with self.accelerator.autocast():
-                        loss = self.model(data)
+                        loss = self.model(images, classes=conditions)
                         loss = loss / self.gradient_accumulate_every
                         total_loss += loss.item()
 
@@ -312,12 +314,12 @@ class Trainer(object):
                         with torch.inference_mode():
                             milestone = self.step // self.save_and_sample_every
                             batches = num_to_groups(self.num_samples, self.batch_size)
-                            all_images_list = list(map(lambda n: self.ema.ema_model.sample(batch_size=n), batches))
+                            # all_images_list = list(map(lambda n: self.ema.ema_model.sample(batch_size=n), batches))
 
-                        all_images = torch.cat(all_images_list, dim=0)
+                        # all_images = torch.cat(all_images_list, dim=0)
 
-                        utils.save_image(all_images, str(self.results_folder / f'sample-{milestone}.png'),
-                                         nrow=int(math.sqrt(self.num_samples)))
+                        # utils.save_image(all_images, str(self.results_folder / f'sample-{milestone}.png'),
+                        #                  nrow=int(math.sqrt(self.num_samples)))
 
                         # whether to calculate fid
 

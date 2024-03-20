@@ -8,7 +8,7 @@ from torch.cuda.amp import autocast
 from einops import rearrange, reduce, repeat
 from tqdm.auto import tqdm
 from utils.helper_functions import *
-from UNet import Unet
+from .UNet import Unet
 # constants
 
 ModelPrediction = namedtuple('ModelPrediction', ['pred_noise', 'pred_x_start'])
