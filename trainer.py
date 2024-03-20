@@ -25,11 +25,13 @@ class FIDEvaluation:
             accelerator=None,
             stats_dir="./results",
             device="cuda",
+            num_classes=10,
             num_fid_samples=50000,
             inception_block_idx=2048,
     ):
         self.batch_size = batch_size
         self.n_samples = num_fid_samples
+        self.n_classes = num_classes
         self.device = device
         self.channels = channels
         self.dl = dl
@@ -95,7 +97,8 @@ class FIDEvaluation:
             f"Stacking Inception features for {self.n_samples} generated samples."
         )
         for batch in tqdm(batches):
-            fake_samples = self.sampler.sample(batch_size=batch)
+            fake_labels = torch.randint(0, self.n_classes, (batch,)).to(self.device)
+            fake_samples = self.sampler.sample(classes=fake_labels)
             fake_features = self.calculate_inception_features(fake_samples)
             stacked_fake_features.append(fake_features)
         stacked_fake_features = torch.cat(stacked_fake_features, dim=0).cpu().numpy()
@@ -224,6 +227,7 @@ class Trainer(object):
                 stats_dir=results_folder,
                 device=self.device,
                 num_fid_samples=num_fid_samples,
+                num_classes=self.ds.num_classes,
                 inception_block_idx=inception_block_idx
             )
 
