@@ -1,10 +1,12 @@
 from pathlib import Path
+from datetime import timedelta
 from multiprocessing import cpu_count
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import Adam
 from torchvision import utils
 from ema_pytorch import EMA
 from accelerate import Accelerator
+from accelerate.utils import InitProcessGroupKwargs
 import os
 import numpy as np
 from einops import rearrange, repeat
@@ -112,7 +114,8 @@ class Trainer(object):
     def __init__(
             self,
             diffusion_model,
-            dataset,
+            train_dataset,
+            val_dataset,
             *,
             train_batch_size=16,
             gradient_accumulate_every=1,
@@ -141,7 +144,8 @@ class Trainer(object):
 
         self.accelerator = Accelerator(
             split_batches=split_batches,
-            mixed_precision=mixed_precision_type if amp else 'no'
+            mixed_precision=mixed_precision_type if amp else 'no',
+            kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=10800))]
         )
 
         # model
@@ -177,15 +181,18 @@ class Trainer(object):
 
         # self.ds = Dataset(folder, self.image_size, augment_horizontal_flip=augment_horizontal_flip,
         #                   convert_image_to=convert_image_to)
-        self.ds = dataset
+        self.train_ds = train_dataset
+        self.val_ds = val_dataset
 
         assert len(
-            self.ds) >= 100, 'you should have at least 100 images in your folder. at least 10k images recommended'
+            self.train_ds) >= 100, 'you should have at least 100 images in your folder. at least 10k images recommended'
 
-        dl = DataLoader(self.ds, batch_size=train_batch_size, shuffle=True, pin_memory=True, num_workers=cpu_count())
-
-        dl = self.accelerator.prepare(dl)
-        self.dl = cycle(dl)
+        train_dl = DataLoader(self.train_ds, batch_size=train_batch_size, shuffle=True, pin_memory=True, num_workers=cpu_count())
+        val_dl = DataLoader(self.val_ds, batch_size=train_batch_size, shuffle=False, pin_memory=True, num_workers=cpu_count())
+        train_dl = self.accelerator.prepare(train_dl)
+        val_dl = self.accelerator.prepare(val_dl)
+        self.train_dl = cycle(train_dl)
+        self.val_dl = cycle(val_dl)
 
         # optimizer
 
@@ -220,14 +227,15 @@ class Trainer(object):
                 )
             self.fid_scorer = FIDEvaluation(
                 batch_size=self.batch_size,
-                dl=self.dl,
+                dl=self.val_dl,
                 sampler=self.ema.ema_model,
                 channels=self.channels,
                 accelerator=self.accelerator,
                 stats_dir=results_folder,
                 device=self.device,
-                num_fid_samples=num_fid_samples,
-                num_classes=self.ds.num_classes,
+                # num_fid_samples=num_fid_samples,
+                num_fid_samples=len(self.val_ds),
+                num_classes=self.val_ds.num_classes,
                 inception_block_idx=inception_block_idx
             )
 
@@ -287,7 +295,7 @@ class Trainer(object):
                 total_loss = 0.
 
                 for _ in range(self.gradient_accumulate_every):
-                    images, conditions = next(self.dl)
+                    images, conditions = next(self.train_dl)
                     images = images.to(device)
                     conditions = conditions.to(device)
 
@@ -314,18 +322,16 @@ class Trainer(object):
 
                     if self.step != 0 and divisible_by(self.step, self.save_and_sample_every):
                         self.ema.ema_model.eval()
-
-                        with torch.inference_mode():
-                            milestone = self.step // self.save_and_sample_every
-                            batches = num_to_groups(self.num_samples, self.batch_size)
+                        # with torch.inference_mode():
+                        #     milestone = self.step // self.save_and_sample_every
+                        #     batches = num_to_groups(self.num_samples, self.batch_size)
                             # all_images_list = list(map(lambda n: self.ema.ema_model.sample(batch_size=n), batches))
-
                         # all_images = torch.cat(all_images_list, dim=0)
-
                         # utils.save_image(all_images, str(self.results_folder / f'sample-{milestone}.png'),
                         #                  nrow=int(math.sqrt(self.num_samples)))
-
                         # whether to calculate fid
+                            
+                        milestone = self.step // self.save_and_sample_every
 
                         if self.calculate_fid:
                             fid_score = self.fid_scorer.fid_score()

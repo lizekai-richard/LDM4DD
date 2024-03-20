@@ -28,7 +28,8 @@ def train(args):
 
     trainer = Trainer(
         diffusion,
-        train_ds,
+        train_dataset=train_ds,
+        val_dataset=val_ds,
         train_batch_size=args.batch_size,
         train_lr=args.lr,
         train_num_steps=args.num_steps,  # total training steps
