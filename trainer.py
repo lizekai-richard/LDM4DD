@@ -9,6 +9,7 @@ from accelerate import Accelerator
 from accelerate.utils import InitProcessGroupKwargs
 import os
 import numpy as np
+import wandb
 from einops import rearrange, repeat
 from pytorch_fid.fid_score import calculate_frechet_distance
 from pytorch_fid.inception import InceptionV3
@@ -126,6 +127,7 @@ class Trainer(object):
             ema_decay=0.995,
             adam_betas=(0.9, 0.99),
             save_and_sample_every=1000,
+            log_every=100,
             num_samples=25,
             results_folder='./results',
             amp=False,
@@ -136,7 +138,8 @@ class Trainer(object):
             inception_block_idx=2048,
             max_grad_norm=1.,
             num_fid_samples=50000,
-            save_best_and_latest_only=False
+            save_best_and_latest_only=False,
+            project_name="CS5340"
     ):
         super().__init__()
 
@@ -147,6 +150,10 @@ class Trainer(object):
             mixed_precision=mixed_precision_type if amp else 'no',
             kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=10800))]
         )
+
+        # wandb
+
+        wandb.init(sync_tensorboard=False, project=project_name, job_type="CleanRepo")
 
         # model
 
@@ -164,6 +171,7 @@ class Trainer(object):
         assert has_int_squareroot(num_samples), 'number of samples must have an integer square root'
         self.num_samples = num_samples
         self.save_and_sample_every = save_and_sample_every
+        self.log_every = log_every
 
         self.batch_size = train_batch_size
         self.gradient_accumulate_every = gradient_accumulate_every
@@ -311,6 +319,9 @@ class Trainer(object):
                 accelerator.wait_for_everyone()
                 accelerator.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
 
+                if accelerator.is_main_process and (self.step % self.log_every == 0):
+                    wandb.log({'Train Loss': total_loss}, step=self.step)
+
                 self.opt.step()
                 self.opt.zero_grad()
 
@@ -336,6 +347,7 @@ class Trainer(object):
                         if self.calculate_fid:
                             fid_score = self.fid_scorer.fid_score()
                             accelerator.print(f'fid_score: {fid_score}')
+                            wandb.log({'FID Score': fid_score}, step=self.step)
                         if self.save_best_and_latest_only:
                             if self.best_fid > fid_score:
                                 self.best_fid = fid_score
@@ -347,3 +359,4 @@ class Trainer(object):
                 pbar.update(1)
 
         accelerator.print('training complete')
+        wandb.finish()
