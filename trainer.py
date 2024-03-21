@@ -1,4 +1,5 @@
 import torch
+import torchvision
 from pathlib import Path
 from datetime import timedelta
 from multiprocessing import cpu_count
@@ -140,6 +141,7 @@ class Trainer(object):
             inception_block_idx=2048,
             max_grad_norm=1.,
             num_fid_samples=50000,
+            plot_samples=True,
             save_best_and_latest_only=False,
             project_name="CS5340"
     ):
@@ -255,6 +257,7 @@ class Trainer(object):
             self.best_fid = 1e10  # infinite
 
         self.save_best_and_latest_only = save_best_and_latest_only
+        self.plot_samples = plot_samples
 
     @property
     def device(self):
@@ -345,6 +348,16 @@ class Trainer(object):
 
                             accelerator.print(f'fid_score: {fid_score}')
                             wandb.log({'FID Score': fid_score}, step=self.step)
+
+                        if self.plot_samples:
+                            sample_labels = []
+                            for c in self.train_ds.num_classes:
+                                sample_labels.extend([c] * 10)
+                            sample_labels = torch.tensor(sample_labels, dtype=torch.long).to(device)
+                            sample_images = self.ema.ema_model.sample(sample_labels)
+                            grid = torchvision.utils.make_grid(sample_images, nrow=10, normalize=True, scale_each=True)
+                            wandb.log({"Sampled Images": wandb.Image(torch.nan_to_num(grid.detach().cpu()))},
+                                      step=self.step)
 
                         if self.save_best_and_latest_only:
                             if self.best_fid > fid_score:
