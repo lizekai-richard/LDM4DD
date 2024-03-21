@@ -1,11 +1,27 @@
+import os
 import argparse
+import random
+import torch
+import numpy as np
 from classifier_free.DDPM import GaussianDiffusion
 from classifier_free.UNet import Unet
 from trainer import Trainer
 from datasets.cifar_custom import CIFAR10_Customized
 
 
+def manual_seed(seed=0):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
 def train(args):
+
+    manual_seed(42)
+
     train_ds = CIFAR10_Customized(args.train_data_path,
                                   train=True,
                                   conditional=True)
@@ -61,6 +77,3 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     train(args)
-
-
-
