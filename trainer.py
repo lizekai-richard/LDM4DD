@@ -1,8 +1,10 @@
+import torch
 from pathlib import Path
 from datetime import timedelta
 from multiprocessing import cpu_count
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import Adam
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchvision import utils
 from ema_pytorch import EMA
 from accelerate import Accelerator
@@ -205,7 +207,7 @@ class Trainer(object):
         # optimizer
 
         self.opt = Adam(diffusion_model.parameters(), lr=train_lr, betas=adam_betas)
-
+        self.sch = ReduceLROnPlateau(self.opt, mode='min', factor=0.5, patience=1)
         # for logging results in a folder periodically
 
         if self.accelerator.is_main_process:
@@ -266,6 +268,7 @@ class Trainer(object):
             'step': self.step,
             'model': self.accelerator.get_state_dict(self.model),
             'opt': self.opt.state_dict(),
+            'sch': self.sch.state_dict(),
             'ema': self.ema.state_dict(),
             'scaler': self.accelerator.scaler.state_dict() if exists(self.accelerator.scaler) else None
         }
@@ -283,6 +286,7 @@ class Trainer(object):
 
         self.step = data['step']
         self.opt.load_state_dict(data['opt'])
+        self.sch.load_state_dict(data['sch'])
         if self.accelerator.is_main_process:
             self.ema.load_state_dict(data["ema"])
 
@@ -333,21 +337,15 @@ class Trainer(object):
 
                     if self.step != 0 and divisible_by(self.step, self.save_and_sample_every):
                         self.ema.ema_model.eval()
-                        # with torch.inference_mode():
-                        #     milestone = self.step // self.save_and_sample_every
-                        #     batches = num_to_groups(self.num_samples, self.batch_size)
-                            # all_images_list = list(map(lambda n: self.ema.ema_model.sample(batch_size=n), batches))
-                        # all_images = torch.cat(all_images_list, dim=0)
-                        # utils.save_image(all_images, str(self.results_folder / f'sample-{milestone}.png'),
-                        #                  nrow=int(math.sqrt(self.num_samples)))
-                        # whether to calculate fid
-                            
                         milestone = self.step // self.save_and_sample_every
 
                         if self.calculate_fid:
                             fid_score = self.fid_scorer.fid_score()
+                            self.sch.step(fid_score)
+
                             accelerator.print(f'fid_score: {fid_score}')
                             wandb.log({'FID Score': fid_score}, step=self.step)
+
                         if self.save_best_and_latest_only:
                             if self.best_fid > fid_score:
                                 self.best_fid = fid_score
