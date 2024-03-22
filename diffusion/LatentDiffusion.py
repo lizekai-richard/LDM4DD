@@ -9,7 +9,7 @@ from .DenoisingDiffusion import DenoisingDiffusionProcess, DenoisingDiffusionCon
 
 class AutoEncoder(nn.Module):
     def __init__(self,
-                 model_type="stabilityai/sd-vae-ft-ema"
+                 model_type="stabilityai/sd-vae-ft-ema" 
                  # @param ["stabilityai/sd-vae-ft-mse", "stabilityai/sd-vae-ft-ema"]
                  ):
         """

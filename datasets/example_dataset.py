@@ -5,7 +5,6 @@ from kornia.utils import image_to_tensor
 import kornia.augmentation as KA
 from torch.utils.data import Dataset
 
-
 class ExampleImageDataset(Dataset):
     """Dataset returning images in a folder."""
 
@@ -31,8 +30,8 @@ class ExampleImageDataset(Dataset):
             )
 
             # check files
-        supported_formats = ['webp', 'jpg', 'png']
-        self.files = [el for el in os.listdir(self.root_dir) if el.split('.')[-1] in supported_formats]
+        supported_formats = ['webp', 'jpg', 'jpeg', 'png']
+        self.files = [el for el in os.listdir(self.root_dir) if el.split('.')[-1].lower() in supported_formats]
 
     def __len__(self):
         return len(self.files)
@@ -59,5 +58,5 @@ class ExampleImageDataset(Dataset):
         elif self.transforms is not None:
             image = self.input_T(image)[0]
             return image
-
-
+        else:
+            return image
