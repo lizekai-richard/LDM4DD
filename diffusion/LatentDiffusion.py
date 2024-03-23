@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+import numpy as np
 from torch.utils.data import DataLoader
 from diffusers.models import AutoencoderKL
 from diffusers.optimization import get_cosine_schedule_with_warmup
@@ -27,7 +28,10 @@ class AutoEncoder(nn.Module):
         return self.model(input).sample
 
     def encode(self, input, mode=False):
-        dist = self.model.encode(input).latent_dist
+        device = next(self.model.parameters()).device
+        input_tensor = torch.tensor(np.array(input, dtype=np.float32)).to(device)
+        dist = self.model.encode(input_tensor).latent_dist
+
         if mode:
             return dist.mode()
         else:
@@ -155,24 +159,28 @@ class LatentDiffusionConditional(LatentDiffusion):
         return self.output_T(self.ae.decode(output_code))
 
     def training_step(self, batch, batch_idx):
-        condition, output = batch
+        output, condition = batch
 
+        print(condition.size(), output.size())
         with torch.no_grad():
             latents = self.ae.encode(self.input_T(output)).detach() * self.latent_scale_factor
-            latents_condition = self.ae.encode(self.input_T(condition)).detach() * self.latent_scale_factor
-        loss = self.model.p_loss(latents, latents_condition)
+            #latents_condition = self.ae.encode(self.input_T(condition)).detach() * self.latent_scale_factor
+        #loss = self.model.p_loss(latents, latents_condition)
+        loss = self.model.p_loss(latents)
 
         self.log('train_loss', loss)
 
         return loss
 
     def validation_step(self, batch, batch_idx):
-        condition, output = batch
+        output, condition = batch
 
+        print(condition.size(), output.size())
         with torch.no_grad():
             latents = self.ae.encode(self.input_T(output)).detach() * self.latent_scale_factor
-            latents_condition = self.ae.encode(self.input_T(condition)).detach() * self.latent_scale_factor
-        loss = self.model.p_loss(latents, latents_condition)
+            #latents_condition = self.ae.encode(self.input_T(condition)).detach() * self.latent_scale_factor
+        #loss = self.model.p_loss(latents, latents_condition)
+        loss = self.model.p_loss(latents)
 
         self.log('val_loss', loss)
 

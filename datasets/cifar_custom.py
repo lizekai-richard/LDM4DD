@@ -60,7 +60,6 @@ class __CIFAR_Customized(Dataset):
         elif self.transforms is not None:
             image = self.input_T(image)[0]
             return image
-        
         else:
             return image
     
