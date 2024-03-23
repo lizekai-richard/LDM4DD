@@ -1,4 +1,4 @@
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
 import torch.nn as nn
 import numpy as np
@@ -67,6 +67,8 @@ class LatentDiffusion(pl.LightningModule):
         self.ae = AutoEncoder()
         with torch.no_grad():
             self.latent_dim = self.ae.encode(torch.ones(1, 3, 256, 256)).shape[1]
+        for p in self.ae.parameters():
+            p.requires_grad = False
         self.model = DenoisingDiffusionProcess(generated_channels=self.latent_dim,
                                                num_timesteps=num_timesteps)
 
@@ -146,6 +148,10 @@ class LatentDiffusionConditional(LatentDiffusion):
         self.ae = AutoEncoder()
         with torch.no_grad():
             self.latent_dim = self.ae.encode(torch.ones(1, 3, 256, 256)).shape[1]
+
+        for p in self.ae.parameters():
+            p.requires_grad = False
+            
         self.model = DenoisingDiffusionConditionalProcess(generated_channels=self.latent_dim,
                                                           condition_channels=self.latent_dim,
                                                           num_timesteps=num_timesteps)
