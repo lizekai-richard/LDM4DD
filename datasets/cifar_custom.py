@@ -41,7 +41,7 @@ class __CIFAR_Customized(Dataset):
         image, label = self.cifar[idx]
         image = self.transforms(image)
         condition = torch.tensor(label, dtype=torch.long)
-        return image, condition  # image shape: (Batch, Channel, Height, Width)
+        return image  # image shape: (Batch, Channel, Height, Width)
 
 
 class CIFAR10_Customized(__CIFAR_Customized):

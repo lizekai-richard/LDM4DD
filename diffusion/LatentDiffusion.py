@@ -79,6 +79,7 @@ class LatentDiffusion(pl.LightningModule):
 
     def input_T(self, input):
         # By default, let the model accept samples in [0,1] range, and transform them automatically
+        #print(input)
         return (input.clip(0, 1).mul_(2)).sub_(1)
 
     def output_T(self, input):
@@ -167,7 +168,7 @@ class LatentDiffusionConditional(LatentDiffusion):
     def training_step(self, batch, batch_idx):
         output, condition = batch
 
-        print(condition.size(), output.size())
+        #print(condition.size(), output.size())
         with torch.no_grad():
             latents = self.ae.encode(self.input_T(output)).detach() * self.latent_scale_factor
             #latents_condition = self.ae.encode(self.input_T(condition)).detach() * self.latent_scale_factor
@@ -181,7 +182,7 @@ class LatentDiffusionConditional(LatentDiffusion):
     def validation_step(self, batch, batch_idx):
         output, condition = batch
 
-        print(condition.size(), output.size())
+        #print(condition.size(), output.size())
         with torch.no_grad():
             latents = self.ae.encode(self.input_T(output)).detach() * self.latent_scale_factor
             #latents_condition = self.ae.encode(self.input_T(condition)).detach() * self.latent_scale_factor

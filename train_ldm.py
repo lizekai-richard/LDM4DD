@@ -3,23 +3,23 @@ import lightning.pytorch as pl
 import kornia.augmentation as KA
 from lightning.pytorch.loggers import TensorBoardLogger, WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
-from diffusion.LatentDiffusion import LatentDiffusionConditional
-from datasets.cifar_custom import CIFAR10_Customized
+from diffusion.LatentDiffusion import LatentDiffusion, LatentDiffusionConditional
+from datasets.cifar_custom import CIFAR10_Customized, CIFAR100_Customized
 from utils.EMA import EMA
 
 
 def train(args):
     print("Building the datasets...")
-    train_ds = CIFAR10_Customized(args.train_data_path,
+    train_ds = CIFAR100_Customized(args.train_data_path,
                                   train=True,
-                                  conditional=True)
-    val_ds = CIFAR10_Customized(args.val_data_path,
+                                  conditional=False)
+    val_ds = CIFAR100_Customized(args.val_data_path,
                                 train=False,
-                                conditional=True)
+                                conditional=False)
     print("Done!")
 
     print("Building the latent diffusion model...")
-    model = LatentDiffusionConditional(train_dataset=train_ds,
+    model = LatentDiffusion(train_dataset=train_ds,
                                        valid_dataset=val_ds,
                                        num_timesteps=args.num_timesteps,
                                        lr=args.lr,
@@ -41,7 +41,8 @@ def train(args):
                 every_n_epochs=args.save_freq,
                 save_top_k=args.top_k
             )],
-        devices=args.devices,
+        accelerator="cpu",
+        devices="auto",
         logger=logger,
         log_every_n_steps=args.log_steps
     )
@@ -53,7 +54,6 @@ def train(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--crop_size", type=int, default=16)
     parser.add_argument("--train_data_path", type=str, default="temp/train/data/0")
     parser.add_argument("--val_data_path", type=str, default="temp/validation/data/0")
     parser.add_argument("--save_path", type=str, default="temp/save/model")
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     parser.add_argument("--num_timesteps", type=int, default=1000)
     parser.add_argument("--accelerator", type=str, default="gpu")
     parser.add_argument("--num_warmup_steps", type=int, default=100)
-    parser.add_argument("--devices", type=str, default="0,1,2,3")
+    parser.add_argument("--devices", type=str, default="0")
 
     args = parser.parse_args()
     train(args)

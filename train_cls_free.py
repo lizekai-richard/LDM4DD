@@ -6,7 +6,7 @@ import numpy as np
 from classifier_free.DDPM import GaussianDiffusion
 from classifier_free.UNet import Unet
 from trainer import Trainer
-from datasets.cifar_custom import CIFAR10_Customized
+from datasets.cifar_custom import CIFAR10_Customized, CIFAR100_Customized
 
 
 def manual_seed(seed=0):
@@ -22,16 +22,16 @@ def train(args):
 
     manual_seed(42)
 
-    train_ds = CIFAR10_Customized(args.train_data_path,
+    train_ds = CIFAR100_Customized(args.train_data_path,
                                   train=True,
                                   conditional=True)
-    val_ds = CIFAR10_Customized(args.val_data_path,
+    val_ds = CIFAR100_Customized(args.val_data_path,
                                 train=False,
                                 conditional=True)
 
     model = Unet(
         dim=64,
-        num_classes=10,
+        num_classes=100,
         dim_mults=(1, 2, 4, 8)
     )
 
@@ -73,7 +73,8 @@ if __name__ == '__main__':
     parser.add_argument("--log_steps", type=int, default=100)
     parser.add_argument("--num_timesteps", type=int, default=1000)
     parser.add_argument("--num_sampling_steps", type=int, default=250)
-    parser.add_argument("--devices", type=str, default="0,1,2,3")
+    parser.add_argument("--accelerator", type=str, default="cpu")
+    #parser.add_argument("--devices", type=str, default="auto")
 
     args = parser.parse_args()
     train(args)
