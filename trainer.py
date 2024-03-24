@@ -351,7 +351,7 @@ class Trainer(object):
 
                         if self.plot_samples:
                             sample_labels = []
-                            for c in self.train_ds.num_classes:
+                            for c in range(self.train_ds.num_classes):
                                 sample_labels.extend([c] * 10)
                             sample_labels = torch.tensor(sample_labels, dtype=torch.long).to(device)
                             sample_images = self.ema.ema_model.sample(sample_labels)
