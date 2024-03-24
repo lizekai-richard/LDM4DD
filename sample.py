@@ -2,7 +2,9 @@ import os
 import argparse
 import random
 import torch
+import uuid
 import numpy as np
+from tqdm import tqdm
 from classifier_free.DDPM import GaussianDiffusion
 from classifier_free.UNet import Unet
 import torchvision.transforms as T
@@ -50,18 +52,40 @@ def conditional_sample(args):
     checkpoint = torch.load(args.ckpt_path, map_location=device)
     diffusion.load_state_dict(checkpoint['model'])
 
-    condition = torch.tensor([int(args.label) for _ in range(args.ipc)], dtype=torch.long).to(device)
-    syn_images = diffusion.sample(condition)
-    syn_images = syn_images.detach().cpu()
+    for label in range(10):
+        save_dir = "./CIFAR10" + "/ipc" + str(args.ipc) + "/" + IDX2CLASS[label]
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
 
-    to_image = T.ToPILImage()
-    save_dir = IDX2CLASS[args.label] + "/ipc" + args.ipc + "/"
-    if not os.path.exists(save_dir):
-        os.mkdir(save_dir)
+        to_image = T.ToPILImage()
 
-    for i in range(args.ipc):
-        image = to_image(syn_images[i])
-        image.save(save_dir + str(i) + ".png")
+        if args.ipc > 50:
+            batch_size = 32
+        else:
+            batch_size = 4
+
+        num_batches = args.ipc // batch_size
+
+        for i in tqdm(range(num_batches)):
+            condition = torch.tensor([int(label) for _ in range(args.ipc)], dtype=torch.long).to(device)
+            syn_images = diffusion.sample(condition)
+            syn_images = syn_images.detach().cpu()
+
+            for _ in range(batch_size):
+                _id = uuid.uuid4()
+                image = to_image(syn_images[i])
+                save_path = os.path.join(save_dir, _id + ".png")
+                image.save(save_path)
+        
+        condition = torch.tensor([int(label) for _ in range(args.ipc - num_batches * batch_size)], dtype=torch.long).to(device)
+        syn_images = diffusion.sample(condition)
+        syn_images = syn_images.detach().cpu()
+
+        for _ in range(batch_size):
+            _id = uuid.uuid4()
+            image = to_image(syn_images[i])
+            save_path = os.path.join(save_dir, _id + ".png")
+            image.save(save_path)
 
 
 def test():
@@ -76,9 +100,8 @@ if __name__ == '__main__':
     parser.add_argument("--ckpt_path", type=str, default="/path/to/checkpoint")
     parser.add_argument("--save_dir", type=str, default="/path/to/save/samples")
     parser.add_argument("--ipc", type=int, default=10)
-    parser.add_argument("--num_steps", type=int, default=1000)
+    parser.add_argument("--num_timesteps", type=int, default=1000)
     parser.add_argument("--num_sampling_steps", type=int, default=250)
-    parser.add_argument("--label", type=int, default=0)
 
     args = parser.parse_args()
 
