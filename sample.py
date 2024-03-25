@@ -8,7 +8,7 @@ from tqdm import tqdm
 from classifier_free.DDPM import GaussianDiffusion
 from classifier_free.UNet import Unet
 import torchvision.transforms as T
-
+# os.environ["CUDA_VISIBLE_DEVICES"]="3"
 IDX2CLASS = {
     0: 'airplane',
     1: 'automobile',
@@ -34,7 +34,7 @@ def manual_seed(seed=0):
 def conditional_sample(args):
 
     manual_seed(42)
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cuda")
+    device = torch.device("cuda:3") if torch.cuda.is_available() else torch.device("cpu")
 
     model = Unet(
         dim=64,
@@ -72,7 +72,7 @@ def conditional_sample(args):
             syn_images = syn_images.detach().cpu()
 
             for _ in range(batch_size):
-                _id = uuid.uuid4()
+                _id = str(uuid.uuid4())
                 image = to_image(syn_images[i])
                 save_path = os.path.join(save_dir, _id + ".png")
                 image.save(save_path)
@@ -82,7 +82,7 @@ def conditional_sample(args):
         syn_images = syn_images.detach().cpu()
 
         for _ in range(batch_size):
-            _id = uuid.uuid4()
+            _id = str(uuid.uuid4())
             image = to_image(syn_images[i])
             save_path = os.path.join(save_dir, _id + ".png")
             image.save(save_path)
