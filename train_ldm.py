@@ -3,7 +3,7 @@ import lightning.pytorch as pl
 import kornia.augmentation as KA
 from lightning.pytorch.loggers import TensorBoardLogger, WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
-from diffusion.LatentDiffusion import LatentDiffusionConditional
+from latent_diffusion.LatentDiffusion import LatentDiffusionConditional
 from datasets.cifar_custom import CIFAR10_Customized
 from utils.EMA import EMA
 
@@ -18,7 +18,7 @@ def train(args):
                                 conditional=True)
     print("Done!")
 
-    print("Building the latent diffusion model...")
+    print("Building the latent latent_diffusion model...")
     model = LatentDiffusionConditional(train_dataset=train_ds,
                                        valid_dataset=val_ds,
                                        num_timesteps=args.num_timesteps,

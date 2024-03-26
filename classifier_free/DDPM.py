@@ -13,7 +13,7 @@ from .UNet import Unet
 
 ModelPrediction = namedtuple('ModelPrediction', ['pred_noise', 'pred_x_start'])
 
-# gaussian diffusion trainer class
+# gaussian latent_diffusion trainer class
 
 
 class GaussianDiffusion(nn.Module):
@@ -78,7 +78,7 @@ class GaussianDiffusion(nn.Module):
         register_buffer('alphas_cumprod', alphas_cumprod)
         register_buffer('alphas_cumprod_prev', alphas_cumprod_prev)
 
-        # calculations for diffusion q(x_t | x_{t-1}) and others
+        # calculations for latent_diffusion q(x_t | x_{t-1}) and others
 
         register_buffer('sqrt_alphas_cumprod', torch.sqrt(alphas_cumprod))
         register_buffer('sqrt_one_minus_alphas_cumprod', torch.sqrt(1. - alphas_cumprod))
@@ -94,7 +94,7 @@ class GaussianDiffusion(nn.Module):
 
         register_buffer('posterior_variance', posterior_variance)
 
-        # below: log calculation clipped because the posterior variance is 0 at the beginning of the diffusion chain
+        # below: log calculation clipped because the posterior variance is 0 at the beginning of the latent_diffusion chain
 
         register_buffer('posterior_log_variance_clipped', torch.log(posterior_variance.clamp(min=1e-20)))
         register_buffer('posterior_mean_coef1', betas * torch.sqrt(alphas_cumprod_prev) / (1. - alphas_cumprod))

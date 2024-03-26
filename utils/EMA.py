@@ -96,7 +96,7 @@ class EMA(Callback):
     def apply_ema(self, pl_module: "pl.LightningModule") -> None:
         for orig_weight, ema_weight in zip(list(pl_module.state_dict().values()), self._ema_model_weights):
             if orig_weight.data.shape==ema_weight.data:
-                # (only if same shape, ignores gammas for diffusion models)
+                # (only if same shape, ignores gammas for latent_diffusion models)
                 diff = ema_weight.data - orig_weight.data
                 diff.mul_(1.0 - self.decay)
                 ema_weight.sub_(diff)
