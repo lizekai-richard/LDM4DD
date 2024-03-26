@@ -1,10 +1,10 @@
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from diffusers.models import AutoencoderKL
 from diffusers.optimization import get_cosine_schedule_with_warmup
-from DenoisingDiffusion import DenoisingDiffusionProcess, DenoisingDiffusionConditionalProcess
+from .DenoisingDiffusion import DenoisingDiffusionProcess, DenoisingDiffusionConditionalProcess
 
 
 class AutoEncoder(nn.Module):
@@ -63,6 +63,8 @@ class LatentDiffusion(pl.LightningModule):
         self.ae = AutoEncoder()
         with torch.no_grad():
             self.latent_dim = self.ae.encode(torch.ones(1, 3, 256, 256)).shape[1]
+        for p in self.ae.parameters():
+            p.requires_grad = False
         self.model = DenoisingDiffusionProcess(generated_channels=self.latent_dim,
                                                num_timesteps=num_timesteps)
 
@@ -116,7 +118,7 @@ class LatentDiffusion(pl.LightningModule):
         optimizer = torch.optim.AdamW(list(filter(lambda p: p.requires_grad, self.model.parameters())), lr=self.lr)
         scheduler = get_cosine_schedule_with_warmup(optimizer,
                                                     num_warmup_steps=self.num_warmup_steps,
-                                                    num_training_steps=len(self.train_dataloader()) * self.num_epcohs)
+                                                    num_training_steps=len(self.train_dataloader()) * self.num_epochs)
         return [optimizer], [scheduler]
 
 
@@ -142,6 +144,10 @@ class LatentDiffusionConditional(LatentDiffusion):
         self.ae = AutoEncoder()
         with torch.no_grad():
             self.latent_dim = self.ae.encode(torch.ones(1, 3, 256, 256)).shape[1]
+
+        for p in self.ae.parameters():
+            p.requires_grad = False
+            
         self.model = DenoisingDiffusionConditionalProcess(generated_channels=self.latent_dim,
                                                           condition_channels=self.latent_dim,
                                                           num_timesteps=num_timesteps)

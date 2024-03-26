@@ -1,6 +1,6 @@
 """
 
-    This file contains implementations of the forward diffusion process
+    This file contains implementations of the forward latent_diffusion process
 
     Current Models:
     
@@ -8,7 +8,7 @@
 
 """
 from torch import nn
-from diffusion.utils.beta_schedules import *
+from latent_diffusion.utils.beta_schedules import *
 
 
 class ForwardModel(nn.Module):

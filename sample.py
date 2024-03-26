@@ -1,52 +1,108 @@
 import os
-import random
 import argparse
+import random
 import torch
-import torch.nn.functional as F
+import uuid
+import numpy as np
+from tqdm import tqdm
+from classifier_free.DDPM import GaussianDiffusion
+from classifier_free.UNet import Unet
 import torchvision.transforms as T
-import matplotlib.pyplot as plt
-from diffusion.LatentDiffusion import LatentDiffusionConditional
-from diffusion.samplers.DDPM import DDPMSampler
+# os.environ["CUDA_VISIBLE_DEVICES"]="3"
+IDX2CLASS = {
+    0: 'airplane',
+    1: 'automobile',
+    2: 'bird',
+    3: 'cat',
+    4: 'deer',
+    5: 'dog',
+    6: 'frog',
+    7: 'horse',
+    8: 'ship',
+    9: 'truck'
+}
+
+def manual_seed(seed=0):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
 
 def conditional_sample(args):
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    manual_seed(42)
+    device = torch.device("cuda:3") if torch.cuda.is_available() else torch.device("cpu")
 
-    num_classes = args.num_classes
-    ipc = args.img_per_class
+    model = Unet(
+        dim=64,
+        num_classes=10,
+        dim_mults=(1, 2, 4, 8)
+    )
 
-    ldm = LatentDiffusionConditional.load_from_checkpoint(args.ckpt_path).to(device)
-    sampler = DDPMSampler(args.num_stpes, ldm.model.num_timesteps)
+    diffusion = GaussianDiffusion(
+        model,
+        image_size=32,
+        timesteps=args.num_timesteps,  # number of steps
+        sampling_timesteps=args.num_sampling_steps
+    ).to(device)
 
-    transform = T.ToPILImage()
-    for c in range(num_classes):
-        condition = F.one_hot(torch.ones(ipc) * c, num_classes=num_classes)
-        samples = ldm(condition.cuda(), sampler=sampler, verbose=True)
-        samples = samples.detach().cpu()
+    checkpoint = torch.load(args.ckpt_path, map_location=device)
+    diffusion.load_state_dict(checkpoint['model'])
 
-        save_dir = os.path.join(args.save_dir, str(c))
-        for i in range(ipc):
-            sample = samples[i, :, :, :].permute(1, 2, 0)
-            image = transform(sample)
-            save_path = os.path.join(save_dir, str(i) + ".png")
+    for label in range(10):
+        save_dir = "./CIFAR10" + "/ipc" + str(args.ipc) + "/" + IDX2CLASS[label]
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
+        to_image = T.ToPILImage()
+
+        if args.ipc > 50:
+            batch_size = 32
+        else:
+            batch_size = 4
+
+        num_batches = args.ipc // batch_size
+
+        for i in tqdm(range(num_batches)):
+            condition = torch.tensor([int(label) for _ in range(args.ipc)], dtype=torch.long).to(device)
+            syn_images = diffusion.sample(condition)
+            syn_images = syn_images.detach().cpu()
+
+            for _ in range(batch_size):
+                _id = str(uuid.uuid4())
+                image = to_image(syn_images[i])
+                save_path = os.path.join(save_dir, _id + ".png")
+                image.save(save_path)
+        
+        condition = torch.tensor([int(label) for _ in range(args.ipc - num_batches * batch_size)], dtype=torch.long).to(device)
+        syn_images = diffusion.sample(condition)
+        syn_images = syn_images.detach().cpu()
+
+        for _ in range(batch_size):
+            _id = str(uuid.uuid4())
+            image = to_image(syn_images[i])
+            save_path = os.path.join(save_dir, _id + ".png")
             image.save(save_path)
 
-        print("Visualizing Class {}...".format(c))
-        for_visualization = random.sample(samples, k=4)
-        for idx in range(for_visualization.shape[0]):
-            plt.subplot(1, len(for_visualization), idx + 1)
-            plt.imshow(for_visualization[idx].permute(1, 2, 0))
-            plt.axis('off')
+
+def test():
+    transform = T.ToPILImage()
+    random_image = torch.randn(4, 3, 32, 32)
+    image = transform(random_image)
+    image.save("test1.png")
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt_path", type=str, default="/path/to/checkpoint")
     parser.add_argument("--save_dir", type=str, default="/path/to/save/samples")
-    parser.add_argument("--img_per_class", type=int, default=10)
-    parser.add_argument("--num_steps", type=int, default=1000)
-    parser.add_argument("--num_classes", type=int, default=10)
+    parser.add_argument("--ipc", type=int, default=10)
+    parser.add_argument("--num_timesteps", type=int, default=1000)
+    parser.add_argument("--num_sampling_steps", type=int, default=250)
+
     args = parser.parse_args()
 
     conditional_sample(args)

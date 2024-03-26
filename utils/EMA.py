@@ -16,12 +16,12 @@ import os.path
 import warnings
 from typing import Any, Dict, List, Optional
 
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
-from pytorch_lightning import Callback
-from pytorch_lightning.utilities import rank_zero_warn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from pytorch_lightning.utilities.types import STEP_OUTPUT
+from lightning.pytorch.callbacks import Callback
+from lightning.pytorch.utilities import rank_zero_warn
+from lightning.pytorch.utilities.exceptions import MisconfigurationException
+from lightning.pytorch.utilities.types import STEP_OUTPUT
 try:
     import amp_C
 
@@ -96,7 +96,7 @@ class EMA(Callback):
     def apply_ema(self, pl_module: "pl.LightningModule") -> None:
         for orig_weight, ema_weight in zip(list(pl_module.state_dict().values()), self._ema_model_weights):
             if orig_weight.data.shape==ema_weight.data:
-                # (only if same shape, ignores gammas for diffusion models)
+                # (only if same shape, ignores gammas for latent_diffusion models)
                 diff = ema_weight.data - orig_weight.data
                 diff.mul_(1.0 - self.decay)
                 ema_weight.sub_(diff)

@@ -1,12 +1,12 @@
 """
 
-    This file contains the DDIM sampler class for a diffusion process
+    This file contains the DDIM sampler class for a latent_diffusion process
 
 """
 import torch
 from torch import nn
 
-from diffusion.utils.beta_schedules import *
+from latent_diffusion.utils.beta_schedules import *
 
 
 class DDIMSampler(nn.Module):

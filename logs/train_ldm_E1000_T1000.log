@@ -1,0 +1,97 @@
+/home/lizekai/LDM4DD/utils/EMA.py:58: UserWarning: EMA has better performance when Apex is installed: https://github.com/NVIDIA/apex#installation.
+  rank_zero_warn(
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+Initializing distributed: GLOBAL_RANK: 0, MEMBER: 1/2
+Initializing distributed: GLOBAL_RANK: 1, MEMBER: 2/2
+----------------------------------------------------------------------------------------------------
+distributed_backend=nccl
+All distributed processes registered. Starting with 2 processes
+----------------------------------------------------------------------------------------------------
+
+/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/torch/cuda/__init__.py:145: UserWarning: 
+NVIDIA GeForce RTX 3090 with CUDA capability sm_86 is not compatible with the current PyTorch installation.
+The current PyTorch install supports CUDA capabilities sm_37 sm_50 sm_60 sm_70.
+If you want to use the NVIDIA GeForce RTX 3090 GPU with PyTorch, please check the instructions at https://pytorch.org/get-started/locally/
+
+  warnings.warn(incompatible_device_warn.format(device_name, capability, " ".join(arch_list), device_name))
+Missing logger folder: tensorboard_logs/lightning_logs
+/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/torch/cuda/__init__.py:145: UserWarning: 
+NVIDIA GeForce RTX 3090 with CUDA capability sm_86 is not compatible with the current PyTorch installation.
+The current PyTorch install supports CUDA capabilities sm_37 sm_50 sm_60 sm_70.
+If you want to use the NVIDIA GeForce RTX 3090 GPU with PyTorch, please check the instructions at https://pytorch.org/get-started/locally/
+
+  warnings.warn(incompatible_device_warn.format(device_name, capability, " ".join(arch_list), device_name))
+Missing logger folder: tensorboard_logs/lightning_logs
+Building the datasets...
+Files already downloaded and verified
+Files already downloaded and verified
+Done!
+Building the latent diffusion model...
+Is Time embed used ?  True
+Done!
+Start Training...
+Traceback (most recent call last):
+  File "/home/lizekai/LDM4DD/train_ldm.py", line 72, in <module>
+    train(args)
+  File "/home/lizekai/LDM4DD/train_ldm.py", line 50, in train
+    trainer.fit(model)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/trainer.py", line 520, in fit
+    call._call_and_handle_interrupt(
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/call.py", line 42, in _call_and_handle_interrupt
+    return trainer.strategy.launcher.launch(trainer_fn, *args, trainer=trainer, **kwargs)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/strategies/launchers/subprocess_script.py", line 92, in launch
+    return function(*args, **kwargs)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/trainer.py", line 559, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/trainer.py", line 894, in _run
+    self.__setup_profiler()
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/trainer.py", line 1024, in __setup_profiler
+    self.profiler.setup(stage=self.state.fn, local_rank=local_rank, log_dir=self.log_dir)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/trainer.py", line 1145, in log_dir
+    dirpath = self.strategy.broadcast(dirpath)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/strategies/ddp.py", line 292, in broadcast
+    torch.distributed.broadcast_object_list(obj, src, group=_group.WORLD)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/torch/distributed/distributed_c10d.py", line 1869, in broadcast_object_list
+    broadcast(object_sizes_tensor, src=src, group=group)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/torch/distributed/distributed_c10d.py", line 1187, in broadcast
+    work = default_pg.broadcast([tensor], opts)
+RuntimeError: NCCL error in: ../torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:47, unhandled cuda error, NCCL version 21.0.3
+ncclUnhandledCudaError: Call to CUDA function failed.
+Building the datasets...
+Files already downloaded and verified
+Files already downloaded and verified
+Done!
+Building the latent diffusion model...
+Is Time embed used ?  True
+Done!
+Start Training...
+Traceback (most recent call last):
+  File "/home/lizekai/LDM4DD/train_ldm.py", line 72, in <module>
+    train(args)
+  File "/home/lizekai/LDM4DD/train_ldm.py", line 50, in train
+    trainer.fit(model)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/trainer.py", line 520, in fit
+    call._call_and_handle_interrupt(
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/call.py", line 42, in _call_and_handle_interrupt
+    return trainer.strategy.launcher.launch(trainer_fn, *args, trainer=trainer, **kwargs)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/strategies/launchers/subprocess_script.py", line 92, in launch
+    return function(*args, **kwargs)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/trainer.py", line 559, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/trainer.py", line 894, in _run
+    self.__setup_profiler()
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/trainer.py", line 1024, in __setup_profiler
+    self.profiler.setup(stage=self.state.fn, local_rank=local_rank, log_dir=self.log_dir)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/trainer/trainer.py", line 1145, in log_dir
+    dirpath = self.strategy.broadcast(dirpath)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/lightning/pytorch/strategies/ddp.py", line 292, in broadcast
+    torch.distributed.broadcast_object_list(obj, src, group=_group.WORLD)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/torch/distributed/distributed_c10d.py", line 1869, in broadcast_object_list
+    broadcast(object_sizes_tensor, src=src, group=group)
+  File "/home/lizekai/miniconda3/envs/ldm/lib/python3.10/site-packages/torch/distributed/distributed_c10d.py", line 1187, in broadcast
+    work = default_pg.broadcast([tensor], opts)
+RuntimeError: NCCL error in: ../torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:47, unhandled cuda error, NCCL version 21.0.3
+ncclUnhandledCudaError: Call to CUDA function failed.

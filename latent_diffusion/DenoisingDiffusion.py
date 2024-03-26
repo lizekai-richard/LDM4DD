@@ -1,8 +1,8 @@
 import torch.nn.functional as F
 from tqdm.auto import tqdm
-from diffusion.utils.forward import *
-from samplers.DDPM import DDPMSampler
-from backbones.unet import *
+from latent_diffusion.utils.forward import *
+from .samplers.DDPM import DDPMSampler
+from .backbones.unet import *
 
 
 class DenoisingDiffusionProcess(nn.Module):
@@ -62,7 +62,7 @@ class DenoisingDiffusionProcess(nn.Module):
 
         x_t = torch.randn([b, self.generated_channels, h, w], device=device)
 
-        for i in tqdm(it, desc='diffusion sampling', total=num_timesteps) if verbose else it:
+        for i in tqdm(it, desc='latent_diffusion sampling', total=num_timesteps) if verbose else it:
             t = torch.full((b,), i, device=device, dtype=torch.long)
             z_t = self.model(x_t, t)  # prediction of noise
             x_t = sampler(x_t, t, z_t)  # prediction of next state
@@ -151,7 +151,7 @@ class DenoisingDiffusionConditionalProcess(nn.Module):
 
         x_t = torch.randn([b, self.generated_channels, h, w], device=device)
 
-        for i in tqdm(it, desc='diffusion sampling', total=num_timesteps) if verbose else it:
+        for i in tqdm(it, desc='latent_diffusion sampling', total=num_timesteps) if verbose else it:
             t = torch.full((b,), i, device=device, dtype=torch.long)
             model_input = torch.cat([x_t, condition], 1).to(device)
             z_t = self.model(model_input, t)  # prediction of noise
