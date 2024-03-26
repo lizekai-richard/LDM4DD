@@ -84,7 +84,7 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
 
 def train(model, model_path, train_data_loader, test_data_loader):
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)  #1e-4 to converge + Adam
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)  #1e-4 to converge + Adam
     train_model(model, train_data_loader, test_data_loader, optimizer, criterion, model_path)
     
 def test(model, model_path, test_data_loader):
@@ -92,4 +92,4 @@ def test(model, model_path, test_data_loader):
     model = torchvision.models.alexnet(num_classes = 100)
     model.load_state_dict(torch.load(model_load_path, map_location=torch.device('cpu')))
     model.to(device)
-    test_model(model, test_data_loader)
+    return test_model(model, test_data_loader)
