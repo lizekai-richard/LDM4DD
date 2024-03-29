@@ -5,3 +5,4 @@ cifar10/*
 classifier_training/CIFAR10_DM
 classifier_training/model_weight
 classifier_training/CIFAR10_DM_index_files
+classifier_training/Archive
