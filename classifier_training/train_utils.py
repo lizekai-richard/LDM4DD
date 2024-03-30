@@ -87,6 +87,7 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
         train_record.append(train_loss.item())
         test_record.append(test_loss.item())
         scheduler.step(train_loss)
+        print(scheduler.get_last_lr())
         train_loss = 0
         
 
@@ -94,10 +95,10 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
     print(f"Time taken: {(end_time - start_time).total_seconds()} seconds")
     return train_record, test_record
 
-def train(model, model_path, train_data_loader, test_data_loader):
+def train(model, model_path, train_data_loader, test_data_loader, num_epochs):
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-2)  #1e-4 to converge + Adam
-    return train_model(model, train_data_loader, test_data_loader, optimizer, criterion, model_path)
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)  #1e-4 to converge + Adam
+    return train_model(model, train_data_loader, test_data_loader, optimizer, criterion, model_path, num_epochs=num_epochs)
     
 def test(model, model_path, test_data_loader, criterion):
     model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
