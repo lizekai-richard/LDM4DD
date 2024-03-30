@@ -1,6 +1,7 @@
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from torchvision import transforms
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 import torch
 import torchvision.datasets
@@ -57,6 +58,7 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
     best_acc = 0
     train_record = []
     test_record = []
+    scheduler = ReduceLROnPlateau(optimizer,patience=3, verbose=True)
 
     for epoch in range(num_epochs):
         model.train()
@@ -84,7 +86,9 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
             torch.save(model.state_dict(), f"{model_path}/model.bin")
         train_record.append(train_loss.item())
         test_record.append(test_loss.item())
+        scheduler.step(train_loss)
         train_loss = 0
+        
 
     end_time = datetime.datetime.now()
     print(f"Time taken: {(end_time - start_time).total_seconds()} seconds")
