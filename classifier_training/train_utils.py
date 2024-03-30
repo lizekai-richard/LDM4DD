@@ -39,7 +39,7 @@ def test_model(model: nn.Module, data_loader: DataLoader, criterion):
             for l, p in zip(label, pred_class):
                 labels.append(l.item())
                 predictions.append(p.item())
-        return accuracy_score(labels, predictions), test_loss / len(predictions)
+        return accuracy_score(labels, predictions), test_loss / len(data_loader.dataset)
 
 def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loader: DataLoader, optimizer, criterion, model_path, num_epochs=50, model_weights=None):
     """
@@ -97,7 +97,7 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
 
 def train(model, model_path, train_data_loader, test_data_loader, num_epochs):
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9)  #1e-4 to converge + Adam
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3, momentum=0.9)  #1e-4 to converge + Adam
     return train_model(model, train_data_loader, test_data_loader, optimizer, criterion, model_path, num_epochs=num_epochs)
     
 def test(model, model_path, test_data_loader, criterion):
