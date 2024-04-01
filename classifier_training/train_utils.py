@@ -58,7 +58,7 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
     best_acc = 0
     train_record = []
     test_record = []
-    scheduler = ReduceLROnPlateau(optimizer,patience=3, verbose=True)
+    scheduler = ReduceLROnPlateau(optimizer,patience=3, min_lr=1e-6)
 
     for epoch in range(num_epochs):
         model.train()
@@ -95,9 +95,14 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
     print(f"Time taken: {(end_time - start_time).total_seconds()} seconds")
     return train_record, test_record
 
-def train(model, model_path, train_data_loader, test_data_loader, num_epochs):
+def train(model, model_path, train_data_loader, test_data_loader, num_epochs, optimizer='adam', lr=1e-3):
+    assert optimizer in ['adam', 'sgd'], 'Not valid option'
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-3, momentum=0.9)  #1e-4 to converge + Adam
+    if optimizer == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr)  #1e-4 to converge + Adam
+    else:
+        optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9) 
+    
     return train_model(model, train_data_loader, test_data_loader, optimizer, criterion, model_path, num_epochs=num_epochs)
     
 def test(model, model_path, test_data_loader, criterion):

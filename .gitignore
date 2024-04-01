@@ -6,3 +6,5 @@ classifier_training/CIFAR10_DM
 classifier_training/model_weight
 classifier_training/CIFAR10_DM_index_files
 classifier_training/Archive
+classifier_training/CIFAR100_DM
+classifier_training/CIFAR100_DM_index_files
