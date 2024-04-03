@@ -31,8 +31,8 @@ class FIDEvaluation:
             accelerator=None,
             stats_dir="./results",
             device="cuda",
-            num_classes=10,
-            num_fid_samples=50000,
+            num_classes=100,
+            num_fid_samples=5000,
             inception_block_idx=2048,
     ):
         self.batch_size = batch_size
@@ -124,7 +124,7 @@ class Trainer(object):
             train_batch_size=16,
             gradient_accumulate_every=1,
             augment_horizontal_flip=True,
-            train_lr=1e-4,
+            train_lr=1e-5,
             train_num_steps=100000,
             ema_update_every=10,
             ema_decay=0.995,
@@ -137,7 +137,7 @@ class Trainer(object):
             mixed_precision_type='fp16',
             split_batches=True,
             convert_image_to=None,
-            calculate_fid=True,
+            calculate_fid=False,
             inception_block_idx=2048,
             max_grad_norm=1.,
             num_fid_samples=50000,
@@ -341,7 +341,24 @@ class Trainer(object):
                     if self.step != 0 and divisible_by(self.step, self.save_and_sample_every):
                         self.ema.ema_model.eval()
                         milestone = self.step // self.save_and_sample_every
-
+                        
+                        if self.save_best_and_latest_only:
+                            if self.best_fid > fid_score:
+                                self.best_fid = fid_score
+                                self.save("best")
+                            self.save("latest")
+                        else:
+                            self.save(f"{milestone}_second")
+                            
+                        if self.plot_samples:
+                            sample_labels = []
+                            for c in range(self.train_ds.num_classes):
+                                sample_labels.extend([c] * 10)
+                            sample_labels = torch.tensor(sample_labels, dtype=torch.long).to(device)
+                            sample_images = self.ema.ema_model.sample(sample_labels)
+                            grid = torchvision.utils.make_grid(sample_images, nrow=10, normalize=True, scale_each=True)
+                            wandb.log({"Sampled Images": wandb.Image(torch.nan_to_num(grid.detach().cpu()))},
+                                      step=self.step)
                         if self.calculate_fid:
                             fid_score = self.fid_scorer.fid_score()
                             self.sch.step(fid_score)
@@ -349,23 +366,7 @@ class Trainer(object):
                             accelerator.print(f'fid_score: {fid_score}')
                             wandb.log({'FID Score': fid_score}, step=self.step)
 
-                        if self.plot_samples:
-                            sample_labels = []
-                            for c in self.train_ds.num_classes:
-                                sample_labels.extend([c] * 10)
-                            sample_labels = torch.tensor(sample_labels, dtype=torch.long).to(device)
-                            sample_images = self.ema.ema_model.sample(sample_labels)
-                            grid = torchvision.utils.make_grid(sample_images, nrow=10, normalize=True, scale_each=True)
-                            wandb.log({"Sampled Images": wandb.Image(torch.nan_to_num(grid.detach().cpu()))},
-                                      step=self.step)
 
-                        if self.save_best_and_latest_only:
-                            if self.best_fid > fid_score:
-                                self.best_fid = fid_score
-                                self.save("best")
-                            self.save("latest")
-                        else:
-                            self.save(milestone)
 
                 pbar.update(1)
 

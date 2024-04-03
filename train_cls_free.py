@@ -21,6 +21,7 @@ def manual_seed(seed=0):
 def train(args):
 
     manual_seed(42)
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     train_ds = CIFAR100_Customized(args.train_data_path,
                                   train=True,
@@ -41,6 +42,10 @@ def train(args):
         timesteps=args.num_timesteps,  # number of steps
         sampling_timesteps=args.num_sampling_steps
     )
+    
+    checkpoint = torch.load(args.ckpt_path, map_location=device)
+    diffusion.load_state_dict(checkpoint['model'])
+    print(f"loaded {args.ckpt_path}")
 
     trainer = Trainer(
         diffusion,
@@ -52,7 +57,7 @@ def train(args):
         gradient_accumulate_every=2,  # gradient accumulation steps
         ema_decay=0.995,  # exponential moving average decay
         amp=True,  # turn on mixed precision
-        calculate_fid=True,  # whether to calculate fid during training
+        calculate_fid=False,  # whether to calculate fid during training
         results_folder=args.save_dir,
         save_and_sample_every=args.save_freq
     )
@@ -64,17 +69,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--train_data_path", type=str, default="/path/to/train/data")
     parser.add_argument("--val_data_path", type=str, default="/path/to/validation/data")
-    parser.add_argument("--save_dir", type=str, default="/path/to/save/model")
+    parser.add_argument("--ckpt_path", type=str, default="saved_model/model-prev.pt")
+    parser.add_argument("--save_dir", type=str, default="saved_model/")
     parser.add_argument("--save_freq", type=int, default=200)
     parser.add_argument("--lr", type=float, default=0.01)
     parser.add_argument("--batch_size", type=int, default=64)
-    parser.add_argument("--num_epochs", type=int, default=1000)
+#    parser.add_argument("--num_epochs", type=int, default=1000)
     parser.add_argument("--num_steps", type=int, default=100000)
     parser.add_argument("--log_steps", type=int, default=100)
     parser.add_argument("--num_timesteps", type=int, default=1000)
     parser.add_argument("--num_sampling_steps", type=int, default=250)
-    parser.add_argument("--accelerator", type=str, default="cpu")
-    #parser.add_argument("--devices", type=str, default="auto")
+    parser.add_argument("--accelerator", type=str, default="gpu")
+    parser.add_argument("--devices", type=str, default="auto")
 
     args = parser.parse_args()
     train(args)

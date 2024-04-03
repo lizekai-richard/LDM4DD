@@ -20,13 +20,20 @@ class __CIFAR_Customized(Dataset):
         if cifar_class is None:
             raise NotImplementedError("Please call the subclass or specify cifar_class manually")
         self.cifar = cifar_class(root_dir, train=train, download=download)
-        self.transforms = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.4914, 0.4822, 0.4465],
-                std=[0.2023, 0.1994, 0.2010]
-            )
-        ])
+        stats = ((0.5074,0.4867,0.4411),(0.2011,0.1987,0.2025))
+        if train:
+            self.transforms = transforms.Compose([
+                transforms.RandomCrop(32, padding=4,padding_mode="reflect"),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomRotation(15),
+                transforms.ToTensor(),
+                transforms.Normalize(*stats)
+            ])
+        else:
+            self.transforms = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(*stats)
+            ])
         self.conditional = conditional
         self.num_classes = max(self.cifar.targets) - min(self.cifar.targets) + 1
 
@@ -41,7 +48,10 @@ class __CIFAR_Customized(Dataset):
         image, label = self.cifar[idx]
         image = self.transforms(image)
         condition = torch.tensor(label, dtype=torch.long)
-        return image  # image shape: (Batch, Channel, Height, Width)
+        if self.conditional:
+            return image, condition  # image shape: (Batch, Channel, Height, Width)
+        else:
+            return image
 
 
 class CIFAR10_Customized(__CIFAR_Customized):
