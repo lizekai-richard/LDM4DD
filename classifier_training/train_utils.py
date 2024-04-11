@@ -13,6 +13,7 @@ from tqdm import tqdm
 from sklearn.metrics import accuracy_score
 import datetime
 import os
+import numpy as np
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -27,6 +28,8 @@ def test_model(model: nn.Module, data_loader: DataLoader, criterion):
     predictions = []
     model.eval()
     test_loss = 0
+    tot_cnt = 0
+    correct_cnt = 0
     with torch.no_grad():
         for data in data_loader:
             image = data[0].to(device)
@@ -36,10 +39,15 @@ def test_model(model: nn.Module, data_loader: DataLoader, criterion):
             loss = criterion(pred, label)
             test_loss += loss.sum()
 
+            tot_cnt += pred_class.size(0)
+            correct_cnt += torch.eq(pred_class, label).float().sum().item()
+
             for l, p in zip(label, pred_class):
                 labels.append(l.item())
                 predictions.append(p.item())
-        return accuracy_score(labels, predictions), test_loss / len(data_loader.dataset)
+
+    acc = correct_cnt / tot_cnt
+    return accuracy_score(labels, predictions), test_loss / len(data_loader)
 
 def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loader: DataLoader, optimizer, criterion, model_path, num_epochs=50, model_weights=None):
     """
@@ -56,15 +64,15 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
         model.load_state_dict(model_weights)
     model.to(device)
 
-    train_loss = 0
     start_time = datetime.datetime.now()
     best_acc = 0
     train_record = []
     test_record = []
-    scheduler = ReduceLROnPlateau(optimizer,patience=3, min_lr=1e-6)
+    scheduler = ReduceLROnPlateau(optimizer, patience=1, mode='max', threshold=0.001, factor=0.5)
 
     for epoch in range(num_epochs):
         model.train()
+        train_loss = 0
         loop = tqdm(train_data_loader)
         for data in loop:
             optimizer.zero_grad()
@@ -74,39 +82,40 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
 
             pred = model(image)
             loss = criterion(pred, label)
-            train_loss += loss
-
             loss.backward()
+
+            with torch.no_grad():
+                train_loss += loss.item()
 
             loop.set_postfix({"loss": loss.item()})
             loop.set_description(f"Epoch {epoch+1}")
 
             optimizer.step()
 
-        print(f"epoch: {epoch+1} done, loss: {train_loss / len(train_data_loader.dataset)}")
+        avg_train_loss = train_loss / len(train_data_loader)
+        print(f"epoch: {epoch+1} done, loss: {avg_train_loss}")
         acc, test_loss = test_model(model, test_data_loader, criterion)
         print(f"Acc: {acc}")
         if acc > best_acc:
             best_acc = acc
             torch.save(model.state_dict(), f"{model_path}/model.bin")
-        train_record.append(train_loss.item())
-        test_record.append(test_loss.item())
-        scheduler.step(test_loss.item())
-        print(scheduler.get_last_lr())
+        train_record.append(train_loss)
+        test_record.append(test_loss)
+        scheduler.step(test_loss)
+        # print(scheduler.get_last_lr())
         train_loss = 0
         
-
     end_time = datetime.datetime.now()
     print(f"Time taken: {(end_time - start_time).total_seconds()} seconds")
     return train_record, test_record
 
-def train(model, model_path, train_data_loader, test_data_loader, num_epochs, optimizer='adam', lr=1e-3):
+def train(model, model_path, train_data_loader, test_data_loader, num_epochs, optimizer='sgd', lr=1e-2):
     assert optimizer in ['adam', 'sgd'], 'Not valid option'
     criterion = nn.CrossEntropyLoss()
     if optimizer == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)  #1e-4 to converge + Adam
     else:
-        optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9) 
+        optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005) 
     
     return train_model(model, train_data_loader, test_data_loader, optimizer, criterion, model_path, num_epochs=num_epochs)
     
