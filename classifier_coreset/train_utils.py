@@ -12,7 +12,6 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score
 import datetime
-import os
 import numpy as np
 
 
@@ -71,7 +70,7 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
             optimizer.zero_grad()
             image = data[0].to(device)
             label = data[1].to(device)
-            image = DiffAugment(image, dsa_strategy, param=dsa_param)
+            # image = DiffAugment(image, dsa_strategy, param=dsa_param)
 
             pred = model(image)
             loss = criterion(pred, label)
