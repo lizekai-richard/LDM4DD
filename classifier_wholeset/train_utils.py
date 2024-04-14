@@ -12,16 +12,12 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score
 import datetime
-import os
 import numpy as np
+import os
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def get_data_loaders(train_data: Dataset, test_data: Dataset, batch_size:int):
-    train_data_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    test_data_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
-    return train_data_loader, test_data_loader
 
 def test_model(model: nn.Module, data_loader: DataLoader, criterion):
     labels = []
@@ -69,10 +65,10 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
         loop = tqdm(train_data_loader)
         for data in loop:
             optimizer.zero_grad()
-            print(data)
             image = data[0].to(device)
             label = data[1].to(device)
-            image = DiffAugment(image, dsa_strategy, param=dsa_param)
+            # No augmentations
+            # image = DiffAugment(image, dsa_strategy, param=dsa_param)
 
             pred = model(image)
             loss = criterion(pred, label)
