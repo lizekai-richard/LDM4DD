@@ -8,4 +8,6 @@ classifier_training/CIFAR10_DM_index_files
 classifier_training/Archive
 classifier_training/CIFAR100_DM
 classifier_training/CIFAR100_DM_index_files
+classifier_coreset/CIFAR10_Syn_Coreset_v0
+classifier_coreset/coreset_index_v0
 classifier_coreset/CIFAR10_Syn_Coreset
