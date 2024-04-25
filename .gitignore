@@ -15,4 +15,4 @@ classifier_coreset_cifar10/CIFAR100_DM
 classifier_coreset_cifar10/coreset_index_cifar100
 classifier_coreset_cifar100/CIFAR100_DM
 classifier_coreset_cifar100/coreset_index_cifar100
-
+classifier_random_selection/model_weight/cifar100_ipc50

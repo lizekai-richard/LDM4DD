@@ -67,8 +67,7 @@ def train_model(model: nn.Module, train_data_loader: DataLoader, test_data_loade
             optimizer.zero_grad()
             image = data[0].to(device)
             label = data[1].to(device)
-            # No augmentations
-            # image = DiffAugment(image, dsa_strategy, param=dsa_param)
+            image = DiffAugment(image, dsa_strategy, param=dsa_param)
 
             pred = model(image)
             loss = criterion(pred, label)
